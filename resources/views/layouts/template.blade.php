@@ -6,12 +6,12 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf" content="{{ csrf_token() }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('public/css/app.css') }}">
     <title>Настройки</title>
 </head>
 <body>
 @yield('content')
 
-<script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('public/js/app.js') }}"></script>
 </body>
 </html>

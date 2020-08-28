@@ -11,7 +11,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\DomCrawler\Crawler;
-use Illuminate\Support\Facades\Cache;
 class AVBY implements IParser
 {
 
@@ -19,19 +18,10 @@ class AVBY implements IParser
         'pages' => array()
     );
 
-    private $vehiclesCache = null;
 
     public function __construct()
     {
-        //$this->vehiclesCache = Cache::put('vehicles', Vehicle::all());
-        //Cache::put('vehicles', Vehicle::all());
-        //Cache::flush();
-//        $value = Cache::rememberForever('vehicles', function () {
-//            return DB::table('vehicles')->get();
-//        });
-        //$this->vehiclesCache = Cache::get('vehicles');
 
-        //dd($this->vehiclesCache);
     }
 
     private $isDuplicate = false;
@@ -62,7 +52,6 @@ class AVBY implements IParser
         ]);
 
         $crawler = $this->runCrawler(iconv("windows-1251", "utf-8", $categoryPageHtml));
-
         $crawler->filter('.brandslist li a')->each(function (Crawler $node, $i) {
 
             $this->links['categories'][] = array(

@@ -52,11 +52,11 @@ class SettingController extends Controller
 
 
     public function getCategories(){
-        //$categories = Category::all();
-        $categories = Cache::rememberForever('categories', function () {
-            return Category::all();
-        });
-        //$categories = Cache::get('categories');
+        $categories = Category::all();
+//        $categories = Cache::rememberForever('categories', function () {
+//            return Category::all();
+//        });
+//        $categories = Cache::get('categories');
         $childCategories = array();
         foreach ($categories as $category) {
             if ($category['parent_id'] !== 0){
@@ -68,10 +68,10 @@ class SettingController extends Controller
 
 
     public function getTable(){
-        $categories = Cache::rememberForever('categories', function () {
-            return Category::all();
-        });
-        //$categories = Category::all();
+//        $categories = Cache::rememberForever('categories', function () {
+//            return Category::all();
+//        });
+        $categories = Category::all();
         return view('partials.categories', array(
             'categories' => $categories
         ));

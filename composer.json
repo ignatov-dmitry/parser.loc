@@ -15,6 +15,7 @@
         "irazasyed/telegram-bot-sdk": "^3.1",
         "laravel/framework": "^7.0",
         "laravel/tinker": "^2.0",
+        "rennokki/laravel-eloquent-query-cache": "^2.2",
         "symfony/dom-crawler": "^5.0"
     },
     "require-dev": {

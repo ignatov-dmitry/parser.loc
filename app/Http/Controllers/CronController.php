@@ -20,6 +20,7 @@ class CronController extends Controller
     public function parse(){
         $start = microtime(true);
         $categories = Category::where('parent_id', '!=', 0)->get();
+        dd($categories);
         $telegramUsers = TelegramUser::all();
         foreach ($categories as $category){
             $cars = $this->parser->getCarList($category->id, $category->url);
