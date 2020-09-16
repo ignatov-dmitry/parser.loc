@@ -34,3 +34,6 @@ Route::post('/settings/import_cars', 'SettingController@importCars');
 
 
 Route::get('/cron/parse', 'CronController@parse');
+
+
+Route::get('/tel', 'PhoneController@index');
