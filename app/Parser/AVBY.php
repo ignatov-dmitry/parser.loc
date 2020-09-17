@@ -4,12 +4,10 @@
 namespace App\Parser;
 
 
-use App\Category;
 use App\Contracts\IParser;
 use App\Vehicle;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\DomCrawler\Crawler;
 class AVBY implements IParser
 {
@@ -18,11 +16,6 @@ class AVBY implements IParser
         'pages' => array()
     );
 
-
-    public function __construct()
-    {
-
-    }
 
     private $isDuplicate = false;
 
@@ -44,25 +37,25 @@ class AVBY implements IParser
 
 // Получить категории
     function loadCategories(){
-        $baseUrl = "https://av.by";
+        $baseUrl = "https://cars.av.by";
         $categoryPageHtml = $this->doRequest($baseUrl, [
             'headers' => [
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
             ]
         ]);
 
-        $crawler = $this->runCrawler(iconv("windows-1251", "utf-8", $categoryPageHtml));
+        $crawler = $this->runCrawler($categoryPageHtml);
         $crawler->filter('.brandslist li a')->each(function (Crawler $node, $i) {
 
-            $this->links['categories'][] = array(
-                'name' => $node->filter('span')->html(),
-                'url'  => $node->attr('href'),
-                'models' => $this->getSubcategories($node->attr('href'))
-            );
-
+            if ($node->text() !== '...'){
+                $this->links['categories'][] = array(
+                    'name' => $node->filter('span')->text(),
+                    'url'  => $node->attr('href'),
+                    'models' => $this->getSubcategories($node->attr('href'))
+                );
+            }
 
         });
-        //dd($this->links['categories']);
         return response()->json($this->links);
     }
 
@@ -139,7 +132,6 @@ class AVBY implements IParser
 
 //Получение объявлений машин
     function getCarList(int $category_id, string $url){
-        //$baseUrl = $url;
         $this->links['cars']['items'] = array();
 
         $pages = $this->getCategoryPages($url);
@@ -173,5 +165,80 @@ class AVBY implements IParser
         return $this->links['cars'];
     }
 
+
+
+    public function utfToWin($str){
+        $symbols = array(
+            "Р°"=>"а",
+            "Р±"=>"б",
+            "РІ"=>"в",
+            "Рі"=>"г",
+            "Рґ"=>"д",
+            "Рµ"=>"е",
+            "С‘"=>"ё",
+            "Р¶"=>"ж",
+            "Р·"=>"з",
+            "Рё"=>"и",
+            "Р№"=>"й",
+            "Рє"=>"к",
+            "Р»"=>"л",
+            "Рј"=>"м",
+            "РЅ"=>"н",
+            "Рѕ"=>"о",
+            "Рї"=>"п",
+            "СЂ"=>"р",
+            "СЃ"=>"с",
+            "С‚"=>"т",
+            "Сѓ"=>"у",
+            "С„"=>"ф",
+            "С…"=>"х",
+            "С†"=>"ц",
+            "С‡"=>"ч",
+            "С?"=>"ш",
+            "С‰"=>"щ",
+            "СЉ"=>"ъ",
+            "С‹"=>"ы",
+            "СЊ"=>"ь",
+            "СЌ"=>"э",
+            "СЋ"=>"ю",
+            "СЏ"=>"я",
+            "Рђ"=>"А",
+            "Р‘"=>"Б",
+            "Р’"=>"В",
+            "Р“"=>"Г",
+            "Р”"=>"Д",
+            "Р•"=>"Е",
+            "РЃ"=>"Ё",
+            "Р–"=>"Ж",
+            "Р—"=>"З",
+            "Р˜"=>"И",
+            "Р™"=>"Й",
+            "Рљ"=>"К",
+            "Р›"=>"Л",
+            "Рњ"=>"М",
+            "Рќ"=>"Н",
+            "Рћ"=>"О",
+            "Рџ"=>"П",
+            "Р "=>"Р",
+            "РЎ"=>"С",
+            "Рў"=>"Т",
+            "РЈ"=>"У",
+            "Р¤"=>"Ф",
+            "РҐ"=>"Х",
+            "Р¦"=>"Ц",
+            "Р§"=>"Ч",
+            "РЁ"=>"Ш",
+            "Р©"=>"Щ",
+            "РЄ"=>"Ъ",
+            "Р«"=>"Ы",
+            "Р¬"=>"Ь",
+            "Р­"=>"Э",
+            "Р®"=>"Ю",
+            "РЇ"=>"Я"
+        );
+
+        $str = strtr($str, $symbols);
+        return $str;
+    }
 
 }
