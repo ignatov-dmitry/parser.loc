@@ -37,3 +37,7 @@ Route::get('/cron/parse', 'CronController@parse');
 
 
 Route::get('/tel', 'PhoneController@index');
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');

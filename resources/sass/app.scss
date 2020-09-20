@@ -1,4 +1,11 @@
-@import "~bootstrap/scss/bootstrap.scss";
+// Fonts
+@import url('https://fonts.googleapis.com/css?family=Nunito');
+
+// Variables
+@import 'variables';
+
+// Bootstrap
+@import '~bootstrap/scss/bootstrap';
 body{
     background: #e4e4e4;
 }
