@@ -34,20 +34,7 @@ class SettingController extends Controller
 
     //Импорт категорий в БД
     function importCategory(Request $request){
-        $category = new Category($request->all());
-
-        $category->platform_id = 1;
-        $category->save();
-
-        $id = $category->id;
-
-        $subCategories = $request->sub_categories;
-        foreach ($subCategories as $subCategory){
-            $category = new Category($subCategory);
-            $category->platform_id = 1;
-            $category->parent_id = $id;
-            $category->save();
-        }
+        $this->parser->importCategory($request);
     }
 
 
