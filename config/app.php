@@ -180,6 +180,7 @@ return [
         //App\Providers\VehicleServiceProvide::class,
         Telegram\Bot\Laravel\TelegramServiceProvider::class,
         \App\Providers\TelegramBotServiceProvider::class,
+        Orchestra\Parser\XmlServiceProvider::class,
     ],
 
     /*
@@ -233,7 +234,8 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'Debugbar' => Barryvdh\Debugbar\Facade::class,
         'Telegram'  => Telegram\Bot\Laravel\Facades\Telegram::class,
-        'TelegramBot' => \App\Facades\TelegramBot::class
+        'TelegramBot' => \App\Facades\TelegramBot::class,
+        'XmlParser' => Orchestra\Parser\Xml\Facade::class,
 
     ],
 
