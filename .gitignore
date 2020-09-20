@@ -14,3 +14,7 @@ npm-debug.log
 yarn-error.log
 /.idea
 .idea
+_ide_helper_models.php
+.phpstorm.meta.php
+_ide_helper.php
+composer.lock
