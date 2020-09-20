@@ -7,7 +7,6 @@ use App\Http\Controllers\CronController;
 use App\Http\Controllers\SettingController;
 use App\Parser\AVBY;
 use Illuminate\Support\ServiceProvider;
-use Symfony\Component\DomCrawler\Crawler;
 
 class ParserServiceProvider extends ServiceProvider
 {

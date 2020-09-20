@@ -4,18 +4,26 @@
 namespace App\Parser;
 
 
+use App\Category;
 use App\Contracts\IParser;
+use App\Facades\TelegramBot;
+use App\TelegramUser;
 use App\Vehicle;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
+use Orchestra\Parser\Xml\Facade as XmlParser;
+use Illuminate\Http\Request;
+
 class AVBY implements IParser
 {
 
     private $links = array(
-        'pages' => array()
+        'pages' => array(),
+        'category_pages'  => array()
     );
 
+    private $baseUrl = 'https://cars.av.by/';
 
     private $isDuplicate = false;
 
@@ -35,10 +43,36 @@ class AVBY implements IParser
 
 
 
+    public function importCategory(Request $request){
+        if ($cat = Category::where('url', '=', $request->url)->first()){
+            $id = $cat->id;
+        }
+        else{
+            $category = new Category($request->all());
+            $category->platform_id = 1;
+            $category->save();
+            $id = $category->id;
+        }
+
+        $subCategories = $request->sub_categories;
+        foreach ($subCategories as $subCategory){
+            if ($subCat = Category::whereUrl($subCategory['url'])->first()){
+                continue;
+            }
+            else{
+                $category = new Category($subCategory);
+                $category->platform_id = 1;
+                $category->parent_id = $id;
+                $category->save();
+            }
+
+        }
+    }
+
 // Получить категории
     function loadCategories(){
-        $baseUrl = "https://cars.av.by";
-        $categoryPageHtml = $this->doRequest($baseUrl, [
+        //$baseUrl = "https://cars.av.by";
+        $categoryPageHtml = $this->doRequest($this->baseUrl, [
             'headers' => [
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
             ]
@@ -76,8 +110,27 @@ class AVBY implements IParser
                 'url'  => $node->attr('href')
             );
         });
+
+
+//        $subCrawler->filter('.brandslist li a')->each(function (Crawler $node, $i) {
+//
+//            $list = $this->getCategoryPages($node->attr('href'));
+//            $this->clearArray($this->links['pages']);
+//            foreach ($list as $page){
+//                $this->links['test'][] =  array(
+//                    'name' => $node->filter('span')->text(),
+//                    'url'  => $page,
+//                );
+//            }
+//
+//        });
+
+
+        //$models = $this->links['category_pages'];
+        //$this->clearArray($this->links['category_pages']);
         return $models;
     }
+
 
 
 
@@ -134,9 +187,11 @@ class AVBY implements IParser
     function getCarList(int $category_id, string $url){
         $this->links['cars']['items'] = array();
 
-        $pages = $this->getCategoryPages($url);
-        foreach ($pages as $page){
-            $categoryPageHtml = $this->doRequest($page, [
+        //$pages = $this->getCategoryPages($url);
+
+
+        //foreach ($pages as $page){
+            $categoryPageHtml = $this->doRequest($url, [
                 'headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
                 ]
@@ -159,10 +214,137 @@ class AVBY implements IParser
                     'created_at' => new \DateTime()
                 );
             }
-        }
+        //}
 
 
         return $this->links['cars'];
+    }
+
+
+
+    public function loadSitemap(){
+        $start = microtime(true);
+
+
+        for($i = 2; $i < 200; $i++){
+            $categoryPageHtml[] = $this->doRequest('https://cars.av.by/search/page/' . $i . '?search_time=1', [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
+                ]
+            ]
+            );
+        }
+
+        foreach ($categoryPageHtml as $page){
+            $crawler = $this->runCrawler($page);
+            $list = $crawler->filter('.listing .listing-item .listing-item-title > h4 > a');
+
+            foreach ($list as $item){
+                if (Vehicle::latest()->firstWhere('url','=', $item->getAttribute('href')) !== null){
+                    continue;
+                }
+
+                $urlToArray = explode('/', $item->getAttribute('href'));
+                $number = array_pop($urlToArray);
+
+                $this->links['cars']['items'][] = array(
+                    'url' => $item->getAttribute('href'),
+                    'name' => trim($item->nodeValue) ,
+                    'number' => $number,
+                    'category_id' => Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first() ? Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first()->id : 0,
+                    'platform_id' => 1,
+                    'created_at' => new \DateTime()
+                );
+            }
+
+        }
+
+
+        $telegramUsers = TelegramUser::all();
+
+        if ($this->links['cars']['items']){
+            Vehicle::insert($this->links['cars']['items']);
+                $txt = array_map(function ($item){
+                    return $item['url'];
+                }, $this->links['cars']['items']);
+                foreach ($telegramUsers as $telegramUser) {
+                    TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
+                }
+        }
+
+        dd(round(microtime(true) - $start, 2));
+
+
+        $client = new Client();
+        $xml = XmlParser::load('https://cars.av.by/sitemap.xml');
+
+        $sitemap = $xml->parse([
+            'sitemap'     => ['uses' => 'sitemap[loc,lastmod]']
+        ]);
+
+        foreach ($sitemap['sitemap'] as $item){
+            $client->get($item['loc'],[
+                'sink' => 'tmp/' . basename($item['loc']),
+                'allow_redirects' => false
+            ]);
+        }
+
+
+        if (is_dir('tmp/')){
+            $files = scandir('tmp/');
+
+            foreach (glob("tmp/sitemap-cars-cars_public_*.xml.gz") as $item){
+                $path_parts = pathinfo($item);
+
+                $gq = gzopen($item, 'rb');
+                $fp = fopen('xmls/'. $path_parts['filename'], 'w+');
+                while ($string = gzread($gq, 4096)) {
+                    fwrite($fp, $string, strlen($string));
+                }
+                gzclose($gq);
+                fclose($fp);
+            }
+        }
+
+
+
+
+        if (is_dir('xmls/')){
+            $cars = null;
+            foreach (glob("xmls/sitemap-cars-cars_public_*.xml") as $item){
+                $xmlCars = XmlParser::load($item);
+                $sitemapCars = $xmlCars->parse([
+                    'cars' => ['uses' => 'url[loc,lastmod]']
+                ]);
+
+
+//                $cars = array_map(function ($tag){
+//                    $urlToArray = explode('/', $tag['loc']);
+//                    $number = array_pop($urlToArray);
+//
+//                    return array(
+//                        'url'         => $tag['loc'],
+//                        'upped'       => $tag['lastmod'],
+//                        'name'        => '' ,
+//                        'number'      => $number,
+//                        'category_id' => Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first() ? Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first()->id : 0,
+//                        'platform_id' => 1,
+//                        'created_at'  => new \DateTime()
+//                    );
+//
+//
+//
+//                }, $sitemapCars['cars']);
+//
+//                if ($cars){
+//                    Vehicle::insertOrIgnore(array_filter($cars));
+//                }
+
+
+            }
+
+        }
+        dd(round(microtime(true) - $start, 2));
     }
 
 
@@ -241,4 +423,7 @@ class AVBY implements IParser
         return $str;
     }
 
+    private function clearArray(array $array){
+        $array = array();
+    }
 }
