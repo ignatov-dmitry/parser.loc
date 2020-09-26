@@ -17,7 +17,9 @@ class SettingController extends Controller
     public function __construct(IParser $parser)
     {
         $this->parser = $parser;
-        Debugbar::disable();
+        $this->parser->loadSitemap();
+        die();
+//        Debugbar::disable();
     }
 
 

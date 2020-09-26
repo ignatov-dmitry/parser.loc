@@ -5,8 +5,12 @@ namespace App\Parser;
 
 
 use App\Category;
+use App\City;
 use App\Contracts\IParser;
 use App\Facades\TelegramBot;
+use App\Filter;
+use App\FilterVehicleModels;
+use App\Region;
 use App\TelegramUser;
 use App\Vehicle;
 use GuzzleHttp\Exception\GuzzleException;
@@ -22,6 +26,7 @@ class AVBY implements IParser
         'pages' => array(),
         'category_pages'  => array()
     );
+    private $modelCatalogJson = '';
 
     private $baseUrl = 'https://cars.av.by/';
 
@@ -40,6 +45,67 @@ class AVBY implements IParser
     function runCrawler(string $html){
         return new Crawler($html);
     }
+
+
+//    public function loadAllCategories(){
+//        $this->modelCatalogJson = $this->doRequest(request()->root() . '/model_catalog.json');
+//        $modelCatalog = json_decode($this->modelCatalogJson);
+
+
+
+
+
+        //get categories from site
+//        for ($i = 0; $i < count($modelCatalog->brands); $i++){
+//            $brands = $this->doRequest('https://av.by/ajax/parameters.php',
+//                ['form_params' =>
+//                    [
+//                        'event' => 'Number_PreSearch',
+//                        'brand_id[0]' => $modelCatalog->brands[$i]->id
+//                    ]
+//                ], 'POST');
+//            $modelCatalog->brands[$i]->url = (json_decode($brands))->search_url;
+//            for ($j = 0; $j < count($modelCatalog->brands[$i]->models); $j++){
+//                $models = $this->doRequest('https://av.by/ajax/parameters.php',
+//                    ['form_params' =>
+//                        [
+//                            'event'       => 'Number_PreSearch',
+//                            'brand_id[0]' => $modelCatalog->brands[$i]->id,
+//                            'model_id[0]' => $modelCatalog->brands[$i]->models[$j]->id
+//                        ]
+//                    ], 'POST');
+//                $modelCatalog->brands[$i]->models[$j]->url = (json_decode($models))->search_url;
+//            }
+//        }
+//        echo json_encode($modelCatalog);
+//        die();
+
+
+
+
+//        foreach ($modelCatalog->brands as $brand){
+//            $category = new Category();
+//            $category->url = '';
+//            $category->name = $brand->name;
+//            $category->platform_id = 1;
+//            $category->url = $brand->url;
+//            $category->save();
+//            $id = $category->id;
+//
+//            foreach ($brand->models as $model){
+//                $category = new Category();
+//                $category->url = $model->url;
+//                $category->name = $model->name;
+//                $category->platform_id = 1;
+//                $category->parent_id = $id;
+//                //dd($model->generations[0]->year_from);
+//                $category->release_start = isset($model->generations[0]) ? $model->generations[0]->year_from : null;
+//                $category->release_end = count($model->generations) > 1 ? (end($model->generations))->year_to : null;
+//
+//                $category->save();
+//            }
+//        }
+//    }
 
 
 
@@ -68,6 +134,10 @@ class AVBY implements IParser
 
         }
     }
+
+
+
+
 
 // Получить категории
     function loadCategories(){
@@ -224,129 +294,150 @@ class AVBY implements IParser
 
     public function loadSitemap(){
         $start = microtime(true);
+//        $categoryPageHtml[] = $this->doRequest('https://cars.av.by/search/?search_time=1&sort=date&order=desc', [
+//                'headers' => [
+//                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
+//                ]
+//            ]
+//        );
+
+        for($i = 1; $i < 200; $i++){
+            if ($i === 1){
+                $substr = '';
+            }
+            else{
+                $substr = 'page/' . $i;
+            }
 
 
-        for($i = 2; $i < 200; $i++){
-            $categoryPageHtml[] = $this->doRequest('https://cars.av.by/search/page/' . $i . '?search_time=1', [
+            $categoryPageHtml= $this->doRequest('https://cars.av.by/search/' . $substr . '?search_time=1&sort=date&order=desc', [
                 'headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
                 ]
-            ]
-            );
+            ]);
+
+
+            if ($this->parse($categoryPageHtml)){
+                break;
+            }
         }
 
-        foreach ($categoryPageHtml as $page){
-            $crawler = $this->runCrawler($page);
-            $list = $crawler->filter('.listing .listing-item .listing-item-title > h4 > a');
 
-            foreach ($list as $item){
-                if (Vehicle::latest()->firstWhere('url','=', $item->getAttribute('href')) !== null){
-                    continue;
-                }
 
-                $urlToArray = explode('/', $item->getAttribute('href'));
-                $number = array_pop($urlToArray);
 
-                $this->links['cars']['items'][] = array(
-                    'url' => $item->getAttribute('href'),
-                    'name' => trim($item->nodeValue) ,
-                    'number' => $number,
-                    'category_id' => Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first() ? Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first()->id : 0,
-                    'platform_id' => 1,
-                    'created_at' => new \DateTime()
-                );
+
+//        $telegramUsers = TelegramUser::all();
+//
+//        if ($this->links['cars']['items']){
+//            Vehicle::insert($this->links['cars']['items']);
+//                $txt = array_map(function ($item){
+//                    return $item['url'];
+//                }, $this->links['cars']['items']);
+//                foreach ($telegramUsers as $telegramUser) {
+//                    TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
+//                }
+//        }
+
+        dd(round(microtime(true) - $start, 2));
+    }
+
+    public function parse($page){
+        $crawler = $this->runCrawler($page);
+        $list = $crawler->filter('.listing .listing-item');
+        $this->links['cars']['items'] = array();
+        $dublicate = false;
+
+        foreach ($list as $item){
+            $url = (new Crawler($item))->filter('.listing-item-title > h4 > a');
+            //dd((new Crawler($item))->filter('.listing-item-price .listing-item-location')->text());
+            $urlToArray = explode('/', $url->attr('href'));
+            $number = array_pop($urlToArray);
+
+
+            if (Vehicle::latest()->firstWhere('url','=', $url->attr('href')) !== null){
+                $dublicate = true;
+                break;
             }
 
+
+            $this->links['cars']['items'][] = array(
+                'url'         => $url->attr('href'),
+                'name'        => trim($url->text()) ,
+                'number'      => $number,
+                'category_id' => Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first()->id,
+                'platform_id' => 1,
+                'year'        => trim((new Crawler($item))->filter('.listing-item-price > span')->text()),
+                'price'       => (int)str_replace(' ', '', trim((new Crawler($item))->filter('.listing-item-price > small')->text())) ,
+                'created_at'  => new \DateTime(),
+                'city_id'     => $city_id = $this->getCityIdFromName(trim((new Crawler($item))->filter('.listing-item-price .listing-item-location')->text())),
+                'region_id'   => $region_id = City::where('id', '=', $city_id)->first()->region_id,
+                'country_id'  => Region::where('id', '=', $region_id)->first()->country_id
+            );
         }
 
 
         $telegramUsers = TelegramUser::all();
-
+        $cars = collect($this->links['cars']['items']);
         if ($this->links['cars']['items']){
             Vehicle::insert($this->links['cars']['items']);
+
+
+            foreach ($telegramUsers as $telegramUser) {
+                $userCars = array();
+                $in = array();
+                $filteredCars = $cars;
+                $filters = Filter::where('chat_id' , '=', 518575553)->get(); //TODO 518575553 replace to $telegramUser->chat_id
+
+
+                foreach ($filters as $filter){
+                    $modles = FilterVehicleModels::where('filter_id', '=', $filter->id)->get();
+                    $modles = $modles->toArray();
+                    if ($filter->country_id != 0){
+                        $filteredCars = $filteredCars->where('country_id', '=', $filter->country_id);
+                    }
+
+                    if ($filter->region_id != 0){
+                        $filteredCars = $filteredCars->where('region_id', '=', $filter->region_id);
+                    }
+
+                    if ($filter->city_id != 0){
+                        $filteredCars = $filteredCars->where('city_id', '=', $filter->city_id);
+                    }
+
+
+                    if ($modles){
+                        foreach ($modles as $category){
+                            $in[] = $category['category_id'];
+                        }
+                        $filteredCars = $filteredCars->whereIn('category_id', $in);
+                    }
+                    elseif ($filter->brand != 0){
+                        $categories = Category::where('parent_id', '=', $filter->brand)->get('id');
+                        foreach ($categories->toArray() as $category){
+                            $in[] = $category['id'];
+                        }
+                        $filteredCars = $filteredCars->whereIn('category_id', $in);
+                    }
+
+
+                    $userCars = array_merge($userCars, $filteredCars->toArray());
+                }
+
+                //dd($cars);
+                //dd($filteredCars);
+
                 $txt = array_map(function ($item){
                     return $item['url'];
-                }, $this->links['cars']['items']);
-                foreach ($telegramUsers as $telegramUser) {
-                    TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
-                }
-        }
+                }, $userCars);
 
-        dd(round(microtime(true) - $start, 2));
-
-
-        $client = new Client();
-        $xml = XmlParser::load('https://cars.av.by/sitemap.xml');
-
-        $sitemap = $xml->parse([
-            'sitemap'     => ['uses' => 'sitemap[loc,lastmod]']
-        ]);
-
-        foreach ($sitemap['sitemap'] as $item){
-            $client->get($item['loc'],[
-                'sink' => 'tmp/' . basename($item['loc']),
-                'allow_redirects' => false
-            ]);
-        }
-
-
-        if (is_dir('tmp/')){
-            $files = scandir('tmp/');
-
-            foreach (glob("tmp/sitemap-cars-cars_public_*.xml.gz") as $item){
-                $path_parts = pathinfo($item);
-
-                $gq = gzopen($item, 'rb');
-                $fp = fopen('xmls/'. $path_parts['filename'], 'w+');
-                while ($string = gzread($gq, 4096)) {
-                    fwrite($fp, $string, strlen($string));
-                }
-                gzclose($gq);
-                fclose($fp);
-            }
-        }
-
-
-
-
-        if (is_dir('xmls/')){
-            $cars = null;
-            foreach (glob("xmls/sitemap-cars-cars_public_*.xml") as $item){
-                $xmlCars = XmlParser::load($item);
-                $sitemapCars = $xmlCars->parse([
-                    'cars' => ['uses' => 'url[loc,lastmod]']
-                ]);
-
-
-//                $cars = array_map(function ($tag){
-//                    $urlToArray = explode('/', $tag['loc']);
-//                    $number = array_pop($urlToArray);
-//
-//                    return array(
-//                        'url'         => $tag['loc'],
-//                        'upped'       => $tag['lastmod'],
-//                        'name'        => '' ,
-//                        'number'      => $number,
-//                        'category_id' => Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first() ? Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first()->id : 0,
-//                        'platform_id' => 1,
-//                        'created_at'  => new \DateTime()
-//                    );
-//
-//
-//
-//                }, $sitemapCars['cars']);
-//
-//                if ($cars){
-//                    Vehicle::insertOrIgnore(array_filter($cars));
-//                }
-
-
+                TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
             }
 
         }
-        dd(round(microtime(true) - $start, 2));
+
+
+        return $dublicate;
     }
-
 
 
     public function utfToWin($str){
@@ -426,4 +517,10 @@ class AVBY implements IParser
     private function clearArray(array $array){
         $array = array();
     }
+
+
+    public function getCityIdFromName(string $name){
+        return City::whereName($name)->first()->id;
+    }
+
 }
