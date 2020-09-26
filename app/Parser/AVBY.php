@@ -426,11 +426,14 @@ class AVBY implements IParser
                 //dd($cars);
                 //dd($filteredCars);
 
-                $txt = array_map(function ($item){
-                    return $item['url'];
-                }, $userCars);
+                if ($userCars){
+                    $txt = array_map(function ($item){
+                        return $item['url'];
+                    }, $userCars);
 
-                TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
+                    TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
+                }
+
             }
 
         }

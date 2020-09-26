@@ -18,6 +18,8 @@ class TelegramController extends Controller
     public function index(){
         $result = TelegramBot::getWebhookUpdates();
 
+        //dd(property_exists(json_decode('{"action":"getBrand","offset":"50"}'), 'offset'));
+
 //        $model = Category::where('id', '=', 2)->first();
 //        $years = array();
 //
@@ -74,7 +76,15 @@ class TelegramController extends Controller
             switch ($data->action) {
                 case 'getBrand':
                     $reply = 'Выберите марку';
-                    $btns = TelegramBot::keyboardFromModel(Category::where('parent_id', '=', 0)->get(), 'brand');
+                    if (property_exists($data, 'offset')){
+                        $btns = TelegramBot::keyboardFromModel(Category::where('parent_id', '=', 0)->offset($data->offset)->limit(50)->get(), 'brand');
+                        $offset = $data->offset + 50;
+                        $btns = array_merge($btns, array(array(array("text" => "Показать ещё", "callback_data" => '{"action":"getBrand","offset":"' . $offset . '"}'))));
+                    }
+                    else{
+                        $btns = TelegramBot::keyboardFromModel(Category::where('parent_id', '=', 0)->limit(50)->get(), 'brand');
+                        $btns = array_merge($btns, array(array(array("text" => "Показать ещё", "callback_data" => '{"action":"getBrand","offset":"50"}'))));
+                    }
                     break;
 
 
