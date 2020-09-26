@@ -17,21 +17,34 @@ class CreateVehiclesTable extends Migration
             $table->id();
             $table->string('number');
             $table->string('name')->nullable();
-            $table->text('description')->nullable();
             $table->string('url');
             $table->float('price')->nullable();
-            $table->date('published')->nullable();
-            $table->date('upped')->nullable();
+            $table->integer('year')->nullable();
+
+            $table->unsignedBigInteger('country_id');
+            $table->foreign('country_id')
+                  ->references('id')
+                  ->on('countries');
+
+            $table->unsignedBigInteger('region_id');
+            $table->foreign('region_id')
+                  ->references('id')
+                  ->on('regions');
+
+            
+            $table->unsignedBigInteger('city_id');
+            $table->foreign('city_id')
+                  ->references('id')
+                  ->on('cities');
+
             $table->unsignedBigInteger('category_id');
             $table->foreign('category_id')
                 ->references('id')
-                ->on('categories')
-                ->onDelete('cascade');
+                ->on('categories');
             $table->unsignedBigInteger('platform_id');
             $table->foreign('platform_id')
                 ->references('id')
-                ->on('platforms')
-                ->onDelete('cascade');
+                ->on('platforms');
             $table->timestamps();
         });
     }
