@@ -386,7 +386,7 @@ class AVBY implements IParser
                 $userCars = array();
                 $in = array();
                 $filteredCars = $cars;
-                $filters = Filter::where('chat_id' , '=', 518575553)->get(); //TODO 518575553 replace to $telegramUser->chat_id
+                $filters = Filter::where('chat_id' , '=', $telegramUser->chat_id)->get(); //TODO 518575553 replace to $telegramUser->chat_id
 
 
                 foreach ($filters as $filter){

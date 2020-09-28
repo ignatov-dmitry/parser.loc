@@ -219,14 +219,10 @@ class TelegramController extends Controller
 
                 TelegramBot::sendMessage($chat_id, $reply, array('inline_keyboard' => array(
                     array(
-                        array('text'=>'Бренд','callback_data'=>'{"action":"getBrand"}'),
-                        array('text'=>'Модель','callback_data'=>'{"action":"setModel"}'),
-                        array('text'=>'Год','callback_data'=>'{"action":"setYear"')
+                        array('text'=>'Поиск по маркам машин','callback_data'=>'{"action":"getBrand"}')
                     ),
                     array(
-                        array('text'=>'Область','callback_data'=>'{"action":"getRegion"}'),
-                        array('text'=>'Город','callback_data'=>'{"action":"getCity"}'),
-                        array('text'=>'Страна','callback_data'=>'{"action":"getCountry"}')
+                        array('text'=>'Задать местоположение','callback_data'=>'{"action":"getCountry"}')
                     )
                 )));
             }
