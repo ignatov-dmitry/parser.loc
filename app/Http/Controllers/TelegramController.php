@@ -17,41 +17,33 @@ class TelegramController extends Controller
 
     public function index(){
         $result = TelegramBot::getWebhookUpdates();
-
-        //dd(property_exists(json_decode('{"action":"getBrand","offset":"50"}'), 'offset'));
-
-//        $model = Category::where('id', '=', 2)->first();
-//        $years = array();
+//        $modelsArray = array();
+//        $modelNames = '';
+//        $userFilter = Filter::where('chat_id', '=', 518575553)->first();
+//        $brand = Category::whereId($userFilter->brand)->first()->name;
+//        $models = FilterVehicleModels::whereFilterId($userFilter->id)->get('category_id');
+//        $location = City::whereId($userFilter->city_id)->first();
+//        $region = Region::whereId($userFilter->region_id)->first();
+//        $country = Country::whereId($userFilter->country_id)->first();
 //
 //
-//
-//
-//        for ($i = (int)$model->release_start; $i <= (int)$model->release_end; $i++){
-//
-//            for ($j = 0; $j < 3; $j++){
-//                if ($i + $j <= (int)$model->release_end){
-//                    $year = $i + $j;
-//                    $years[$i][$j] =  array('text' => $year, 'callback_data'=>'{"action":"year","year":"' . $year . '"}');
-//                }
-//            }
-//            $i = $i + $j - 1;
-//
-//
+//        foreach ($models as $model){
+//            $modelsArray[] = Category::whereId($model->category_id)->first()->name;
 //        }
+//        $modelNames = empty($models->toArray()) == false ? implode(", ", $modelsArray) : "Все";
+//        $country = empty($country) == false ? $country->name : "Все";
+//        $region = empty($region) == false ? $region->name : "Все";
+//        $location = empty($location) == false ? $location->name : "Все" ;
 //
 //
-//        dd(array_values($years), array(
-//            array(
-//                array('text'=>'Бренд','callback_data'=>'{"action":"getBrand"}'),
-//                array('text'=>'Модель','callback_data'=>'{"action":"setModel"}'),
-//                array('text'=>'Год','callback_data'=>'{"action":"setYear"')
-//            ),
-//            array(
-//                array('text'=>'Область','callback_data'=>'{"action":"getRegion"}'),
-//                array('text'=>'Город','callback_data'=>'{"action":"getCity"}'),
-//                array('text'=>'Страна','callback_data'=>'{"action":"getCountry"}')
-//            )
-//        ));
+//
+//        $reply = "
+//                    Бренд: {$brand}
+//                    Модели: $modelNames
+//                    Страна: $country
+//                    Регион: $region
+//                    Город:  $location
+//                ";
 
 
         if (isset($result['message'])){
@@ -93,7 +85,7 @@ class TelegramController extends Controller
                     $filter->brand = $data->id;
                     $filter->save();
 
-                    $reply = 'Выберите модель';
+                    $reply = 'Выберите модель или пропустите';
                     $btns = TelegramBot::keyboardFromModel(Category::where('parent_id', '=', $data->id)->get(), 'model');
                     break;
 
@@ -109,40 +101,32 @@ class TelegramController extends Controller
                         ]);
                     }
 
-                    $reply = 'Выберите минимальный год производства';
-                    $model = Category::where('id', '=', $data->id)->first();
-                    $years = array();
-
-
-
-
-                    for ($i = (int)$model->release_start; $i <= (int)$model->release_end; $i++){
-
-                        for ($j = 0; $j < 3; $j++){
-                            if ($i + $j <= (int)$model->release_end){
-                                $year = $i + $j;
-                                $years[$i][$j] =  array('text' => $year, 'callback_data'=>'{"action":"year","year":"' . $year . '"}');
-                            }
-                        }
-                        $i = $i + $j - 1;
-
-
-                    }
-
-                    $btns = array_values($years);
-
-
-
-
-                    break;
-
-
-
-
-
-
-                case 'getYear':
-                    $reply = 'Выберите год';
+//                    $reply = 'Выберите минимальный год производства';
+//                    $model = Category::where('id', '=', $data->id)->first();
+//                    $years = array();
+//
+//
+//
+//                    if (empty((int)$model->release_start) OR empty((int)$model->release_end)){
+//                        $reply = 'Нету данных о годах производства';
+//                    }
+//                    else{
+//                        for ($i = (int)$model->release_start; $i <= (int)$model->release_end; $i++){
+//
+//                            for ($j = 0; $j < 3; $j++){
+//                                if ($i + $j <= (int)$model->release_end){
+//                                    $year = $i + $j;
+//                                    $years[$i][$j] =  array('text' => $year, 'callback_data'=>'{"action":"year","year":"' . $year . '"}');
+//                                }
+//                            }
+//                            $i = $i + $j - 1;
+//
+//
+//                        }
+//                    }
+//
+//
+//                    $btns = array_values($years);
 
                     break;
 
@@ -187,44 +171,121 @@ class TelegramController extends Controller
         }
 
 
+        if (isset($result["message"]["test"])){
+            TelegramBot::sendMessage($chat_id, $reply, array(
+                'keyboard' => array(
+                    array(
+                        array('text' => 'Работает')
+                    )
+                ),
+                'resize_keyboard ' => true
+            ));
+        }
 
         if(isset($text)){
             if ($text == "/start") {
                 $name = isset($result["message"]["from"]["username"]) ? $result["message"]["from"]["username"] : 'NO NAME'; //Юзернейм пользователя
-                $reply = "Добро пожаловать в бота " . $name . ";";
-                TelegramBot::sendMessage($chat_id, $reply);
+                $reply = "Добро пожаловать в бота";
+
+                if (!$telegramUser = TelegramUser::where('chat_id', '=', $chat_id)->first()){
+                    TelegramUser::insert(array('chat_id' => $chat_id));
+                }
+
+                TelegramBot::sendMessage($chat_id, $reply, array(
+                    'keyboard' => array(
+                        array(
+                            array('text' => 'Добавить фильтр'),
+                            array('text' => 'Мой фильтр')
+                        ),
+                        array(
+                            array('text' => 'Удалить фильтр'),
+                        )
+                    ),
+                    'resize_keyboard ' => true
+                ));
             }
             elseif ($text === "/help"){
                 $reply = "Помощь";
                 TelegramBot::sendMessage($chat_id, $reply);
             }
             elseif ($text === "/register"){
-                TelegramUser::insert(array('chat_id' => $chat_id));
+                if (!$telegramUser = TelegramUser::where('chat_id', '=', $chat_id)->first()){
+                    TelegramUser::insert(array('chat_id' => $chat_id));
+                    $reply = "Вы успешно зарегестрированны " . $name . ";";
+                }
+                else{
+                    $reply = 'Вы уже зарегестрированны';
+                }
 
-                $reply = "Вы успешно зарегестрированны " . $name . ";";
                 TelegramBot::sendMessage($chat_id, $reply);
             }
-            elseif ($text === "/add_filter"){
+            elseif ($text === "Добавить фильтр"){
                 $reply = "Добавить фильтр";
-
-
-
                 if (!$filter_id = Filter::where('chat_id', '=', $chat_id)->first()){
                     Filter::insert(array(
                         'chat_id' => $chat_id,
                     ));
                 }
 
+                TelegramBot::sendMessage($chat_id, $reply, array(
+                    'inline_keyboard' => array(
+                        array(
+                            array('text'=>'Поиск по маркам машин','callback_data'=>'{"action":"getBrand"}')
+                        ),
+                        array(
+                            array('text'=>'Задать местоположение','callback_data'=>'{"action":"getCountry"}')
+                        )
+                    ))
+                );
+            }
+            elseif($text === "Мой фильтр"){
+                $modelsArray = array();
+                $modelNames = '';
+                $reply = "Фильтров не найдено";
+                $userFilter = Filter::where('chat_id', '=', $chat_id)->first();
+                if (!empty($userFilter)){
+                    $brand = Category::whereId($userFilter->brand)->first();
+                    $models = FilterVehicleModels::whereFilterId($userFilter->id)->get('category_id');
+                    $location = City::whereId($userFilter->city_id)->first();
+                    $region = Region::whereId($userFilter->region_id)->first();
+                    $country = Country::whereId($userFilter->country_id)->first();
+
+                    $brand = empty($brand) == false ? $brand->name : "Все";
+                    foreach ($models as $model){
+                        $modelsArray[] = Category::whereId($model->category_id)->first()->name;
+                    }
+                    $modelNames = empty($models->toArray()) == false ? implode(", ", $modelsArray) : "Все";
+                    $country = empty($country) == false ? $country->name : "Все";
+                    $region = empty($region) == false ? $region->name : "Все";
+                    $location = empty($location) == false ? $location->name : "Все" ;
+
+                    $reply = "
+                   Бренд: {$brand}\nМодели: $modelNames\nСтрана: $country\nРегион: $region\nГород:  $location
+                ";
+                }
 
 
-                TelegramBot::sendMessage($chat_id, $reply, array('inline_keyboard' => array(
-                    array(
-                        array('text'=>'Поиск по маркам машин','callback_data'=>'{"action":"getBrand"}')
-                    ),
-                    array(
-                        array('text'=>'Задать местоположение','callback_data'=>'{"action":"getCountry"}')
-                    )
-                )));
+
+                TelegramBot::sendMessage($chat_id, $reply);
+
+
+            }
+            elseif($text === "Удалить фильтр"){
+                $reply = "Фильтр удален";
+                $userFilter = Filter::where('chat_id', '=', $chat_id)->first();
+                if (!empty($userFilter)){
+                    FilterVehicleModels::whereFilterId($userFilter->id)->delete();
+                    $userFilter->delete();
+                }
+                else{
+                    $reply = "Фильтров не найдено";
+                }
+//                $userFilter->country_id = 0;
+//                $userFilter->region_id = 0;
+//                $userFilter->city_id = 0;
+//                $userFilter->brand = 0;
+//                $userFilter->save();
+                TelegramBot::sendMessage($chat_id, $reply);
             }
         }
     }
