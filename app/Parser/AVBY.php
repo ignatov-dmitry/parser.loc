@@ -26,7 +26,6 @@ class AVBY implements IParser
         'pages' => array(),
         'category_pages'  => array()
     );
-    private $modelCatalogJson = '';
 
     private $baseUrl = 'https://cars.av.by/';
 
@@ -46,66 +45,6 @@ class AVBY implements IParser
         return new Crawler($html);
     }
 
-
-//    public function loadAllCategories(){
-//        $this->modelCatalogJson = $this->doRequest(request()->root() . '/model_catalog.json');
-//        $modelCatalog = json_decode($this->modelCatalogJson);
-
-
-
-
-
-        //get categories from site
-//        for ($i = 0; $i < count($modelCatalog->brands); $i++){
-//            $brands = $this->doRequest('https://av.by/ajax/parameters.php',
-//                ['form_params' =>
-//                    [
-//                        'event' => 'Number_PreSearch',
-//                        'brand_id[0]' => $modelCatalog->brands[$i]->id
-//                    ]
-//                ], 'POST');
-//            $modelCatalog->brands[$i]->url = (json_decode($brands))->search_url;
-//            for ($j = 0; $j < count($modelCatalog->brands[$i]->models); $j++){
-//                $models = $this->doRequest('https://av.by/ajax/parameters.php',
-//                    ['form_params' =>
-//                        [
-//                            'event'       => 'Number_PreSearch',
-//                            'brand_id[0]' => $modelCatalog->brands[$i]->id,
-//                            'model_id[0]' => $modelCatalog->brands[$i]->models[$j]->id
-//                        ]
-//                    ], 'POST');
-//                $modelCatalog->brands[$i]->models[$j]->url = (json_decode($models))->search_url;
-//            }
-//        }
-//        echo json_encode($modelCatalog);
-//        die();
-
-
-
-
-//        foreach ($modelCatalog->brands as $brand){
-//            $category = new Category();
-//            $category->url = '';
-//            $category->name = $brand->name;
-//            $category->platform_id = 1;
-//            $category->url = $brand->url;
-//            $category->save();
-//            $id = $category->id;
-//
-//            foreach ($brand->models as $model){
-//                $category = new Category();
-//                $category->url = $model->url;
-//                $category->name = $model->name;
-//                $category->platform_id = 1;
-//                $category->parent_id = $id;
-//                //dd($model->generations[0]->year_from);
-//                $category->release_start = isset($model->generations[0]) ? $model->generations[0]->year_from : null;
-//                $category->release_end = count($model->generations) > 1 ? (end($model->generations))->year_to : null;
-//
-//                $category->save();
-//            }
-//        }
-//    }
 
 
 
@@ -256,11 +195,6 @@ class AVBY implements IParser
 //Получение объявлений машин
     function getCarList(int $category_id, string $url){
         $this->links['cars']['items'] = array();
-
-        //$pages = $this->getCategoryPages($url);
-
-
-        //foreach ($pages as $page){
             $categoryPageHtml = $this->doRequest($url, [
                 'headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
@@ -284,241 +218,133 @@ class AVBY implements IParser
                     'created_at' => new \DateTime()
                 );
             }
-        //}
-
 
         return $this->links['cars'];
     }
 
 
 
-    public function loadSitemap(){
-        $start = microtime(true);
-//        $categoryPageHtml[] = $this->doRequest('https://cars.av.by/search/?search_time=1&sort=date&order=desc', [
-//                'headers' => [
-//                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
-//                ]
-//            ]
-//        );
+    public function parse(){
+        $json = $this->doRequest('https://api.av.by/offer-types/cars/filters/main/apply', [
+            'headers' => [
+                'Content-Type'     => 'application/json',
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
+            ],
+            'body' => '{"page":1,"properties":[{"name":"price_currency","value":2},{"name":"creation_date","value":10}],"sorting":4}'
+        ],'POST');
 
-        for($i = 1; $i < 200; $i++){
-            if ($i === 1){
-                $substr = '';
-            }
-            else{
-                $substr = 'page/' . $i;
-            }
+        $pages = (json_decode($json))->pageCount;
 
+        for($i = 1; $i < $pages; $i++){
 
-            $categoryPageHtml= $this->doRequest('https://cars.av.by/search/' . $substr . '?search_time=1&sort=date&order=desc', [
+            $json = $this->doRequest('https://api.av.by/offer-types/cars/filters/main/apply', [
                 'headers' => [
+                    'Content-Type'     => 'application/json',
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
-                ]
-            ]);
+                ],
+                'body' => '{"page":' . $i . ',"properties":[{"name":"price_currency","value":2},{"name":"creation_date","value":10}],"sorting":4}'
+            ],'POST');
 
 
-            if ($this->parse($categoryPageHtml)){
-                break;
-            }
-        }
+            $list = (json_decode($json))->adverts;
+            $this->links['cars']['items'] = array();
+            $dublicate = false;
 
 
+            foreach ($list as $item){
 
+                $url = $item->publicUrl;
+                $urlToArray = explode('/', $url);
+                $number = array_pop($urlToArray);
 
-
-//        $telegramUsers = TelegramUser::all();
-//
-//        if ($this->links['cars']['items']){
-//            Vehicle::insert($this->links['cars']['items']);
-//                $txt = array_map(function ($item){
-//                    return $item['url'];
-//                }, $this->links['cars']['items']);
-//                foreach ($telegramUsers as $telegramUser) {
-//                    TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
-//                }
-//        }
-
-        dd(round(microtime(true) - $start, 2));
-    }
-
-    public function parse($page){
-        $crawler = $this->runCrawler($page);
-        $list = $crawler->filter('.listing .listing-item');
-        $this->links['cars']['items'] = array();
-        $dublicate = false;
-
-        foreach ($list as $item){
-            $url = (new Crawler($item))->filter('.listing-item-title > h4 > a');
-            //dd((new Crawler($item))->filter('.listing-item-price .listing-item-location')->text());
-            $urlToArray = explode('/', $url->attr('href'));
-            $number = array_pop($urlToArray);
-
-
-            if (Vehicle::latest()->firstWhere('url','=', $url->attr('href')) !== null){
-                $dublicate = true;
-                break;
-            }
-
-
-            $this->links['cars']['items'][] = array(
-                'url'         => $url->attr('href'),
-                'name'        => trim($url->text()) ,
-                'number'      => $number,
-                'category_id' => Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first()->id,
-                'platform_id' => 1,
-                'year'        => trim((new Crawler($item))->filter('.listing-item-price > span')->text()),
-                'price'       => (int)str_replace(' ', '', trim((new Crawler($item))->filter('.listing-item-price > small')->text())) ,
-                'created_at'  => new \DateTime(),
-                'city_id'     => $city_id = $this->getCityIdFromName(trim((new Crawler($item))->filter('.listing-item-price .listing-item-location')->text())),
-                'region_id'   => $region_id = City::where('id', '=', $city_id)->first()->region_id,
-                'country_id'  => Region::where('id', '=', $region_id)->first()->country_id
-            );
-        }
-
-
-        $telegramUsers = TelegramUser::all();
-        $cars = collect($this->links['cars']['items']);
-        if ($this->links['cars']['items']){
-            Vehicle::insert($this->links['cars']['items']);
-
-
-            foreach ($telegramUsers as $telegramUser) {
-                $userCars = array();
-                $in = array();
-                $filteredCars = $cars;
-                $filters = Filter::where('chat_id' , '=', $telegramUser->chat_id)->get(); //TODO 518575553 replace to $telegramUser->chat_id
-
-
-                foreach ($filters as $filter){
-                    $modles = FilterVehicleModels::where('filter_id', '=', $filter->id)->get();
-                    $modles = $modles->toArray();
-                    if ($filter->country_id != 0){
-                        $filteredCars = $filteredCars->where('country_id', '=', $filter->country_id);
-                    }
-
-                    if ($filter->region_id != 0){
-                        $filteredCars = $filteredCars->where('region_id', '=', $filter->region_id);
-                    }
-
-                    if ($filter->city_id != 0){
-                        $filteredCars = $filteredCars->where('city_id', '=', $filter->city_id);
-                    }
-
-
-                    if ($modles){
-                        foreach ($modles as $category){
-                            $in[] = $category['category_id'];
-                        }
-                        $filteredCars = $filteredCars->whereIn('category_id', $in);
-                    }
-                    elseif ($filter->brand != 0){
-                        $categories = Category::where('parent_id', '=', $filter->brand)->get('id');
-                        foreach ($categories->toArray() as $category){
-                            $in[] = $category['id'];
-                        }
-                        $filteredCars = $filteredCars->whereIn('category_id', $in);
-                    }
-
-
-                    $userCars = array_merge($userCars, $filteredCars->toArray());
+                if (Vehicle::latest()->firstWhere('url','=', $url) !== null){
+                    $dublicate = true;
+                    break;
                 }
 
-                //dd($cars);
-                //dd($filteredCars);
 
-                if ($userCars){
-                    $txt = array_map(function ($item){
-                        return $item['url'];
-                    }, $userCars);
+                $this->links['cars']['items'][] = array(
+                    'url'         => $url,
+                    'name'        => $item->metaInfo->h1 ,
+                    'number'      => $number,
+                    'category_id' => Category::where('url', 'LIKE', implode('/', $urlToArray) . '%')->first()->id,
+                    'platform_id' => 1,
+                    'year'        => $item->metadata->year,
+                    'price'       => $item->price->usd->amount ,
+                    'created_at'  => new \DateTime(),
+                    'city_id'     => $city_id = $this->getCityIdFromName($item->shortLocationName),
+                    'region_id'   => $region_id = City::where('id', '=', $city_id)->first()->region_id,
+                    'country_id'  => Region::where('id', '=', $region_id)->first()->country_id
+                );
+            }
 
-                    TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
+
+
+            $telegramUsers = TelegramUser::all();
+            $cars = collect($this->links['cars']['items']);
+            if ($this->links['cars']['items']){
+                Vehicle::insert($this->links['cars']['items']);
+
+
+                foreach ($telegramUsers as $telegramUser) {
+                    $userCars = array();
+                    $in = array();
+                    $filteredCars = $cars;
+                    $filters = Filter::where('chat_id' , '=', $telegramUser->chat_id)->get();
+
+
+                    foreach ($filters as $filter){
+                        $modles = FilterVehicleModels::where('filter_id', '=', $filter->id)->get();
+                        $modles = $modles->toArray();
+                        if ($filter->country_id != 0){
+                            $filteredCars = $filteredCars->where('country_id', '=', $filter->country_id);
+                        }
+
+                        if ($filter->region_id != 0){
+                            $filteredCars = $filteredCars->where('region_id', '=', $filter->region_id);
+                        }
+
+                        if ($filter->city_id != 0){
+                            $filteredCars = $filteredCars->where('city_id', '=', $filter->city_id);
+                        }
+
+
+                        if ($modles){
+                            foreach ($modles as $category){
+                                $in[] = $category['category_id'];
+                            }
+                            $filteredCars = $filteredCars->whereIn('category_id', $in);
+                        }
+                        elseif ($filter->brand != 0){
+                            $categories = Category::where('parent_id', '=', $filter->brand)->get('id');
+                            foreach ($categories->toArray() as $category){
+                                $in[] = $category['id'];
+                            }
+                            $filteredCars = $filteredCars->whereIn('category_id', $in);
+                        }
+
+
+                        $userCars = array_merge($userCars, $filteredCars->toArray());
+                    }
+
+                    if ($userCars){
+                        $txt = array_map(function ($item){
+                            return $item['url'];
+                        }, $userCars);
+
+                        TelegramBot::sendMessage($telegramUser->chat_id, "Новые автомобили:\n" . implode("\n ", $txt));
+                    }
+
                 }
 
             }
 
+            if ($dublicate){
+                break;
+            }
+
         }
 
-
-        return $dublicate;
-    }
-
-
-    public function utfToWin($str){
-        $symbols = array(
-            "Р°"=>"а",
-            "Р±"=>"б",
-            "РІ"=>"в",
-            "Рі"=>"г",
-            "Рґ"=>"д",
-            "Рµ"=>"е",
-            "С‘"=>"ё",
-            "Р¶"=>"ж",
-            "Р·"=>"з",
-            "Рё"=>"и",
-            "Р№"=>"й",
-            "Рє"=>"к",
-            "Р»"=>"л",
-            "Рј"=>"м",
-            "РЅ"=>"н",
-            "Рѕ"=>"о",
-            "Рї"=>"п",
-            "СЂ"=>"р",
-            "СЃ"=>"с",
-            "С‚"=>"т",
-            "Сѓ"=>"у",
-            "С„"=>"ф",
-            "С…"=>"х",
-            "С†"=>"ц",
-            "С‡"=>"ч",
-            "С?"=>"ш",
-            "С‰"=>"щ",
-            "СЉ"=>"ъ",
-            "С‹"=>"ы",
-            "СЊ"=>"ь",
-            "СЌ"=>"э",
-            "СЋ"=>"ю",
-            "СЏ"=>"я",
-            "Рђ"=>"А",
-            "Р‘"=>"Б",
-            "Р’"=>"В",
-            "Р“"=>"Г",
-            "Р”"=>"Д",
-            "Р•"=>"Е",
-            "РЃ"=>"Ё",
-            "Р–"=>"Ж",
-            "Р—"=>"З",
-            "Р˜"=>"И",
-            "Р™"=>"Й",
-            "Рљ"=>"К",
-            "Р›"=>"Л",
-            "Рњ"=>"М",
-            "Рќ"=>"Н",
-            "Рћ"=>"О",
-            "Рџ"=>"П",
-            "Р "=>"Р",
-            "РЎ"=>"С",
-            "Рў"=>"Т",
-            "РЈ"=>"У",
-            "Р¤"=>"Ф",
-            "РҐ"=>"Х",
-            "Р¦"=>"Ц",
-            "Р§"=>"Ч",
-            "РЁ"=>"Ш",
-            "Р©"=>"Щ",
-            "РЄ"=>"Ъ",
-            "Р«"=>"Ы",
-            "Р¬"=>"Ь",
-            "Р­"=>"Э",
-            "Р®"=>"Ю",
-            "РЇ"=>"Я"
-        );
-
-        $str = strtr($str, $symbols);
-        return $str;
-    }
-
-    private function clearArray(array $array){
-        $array = array();
     }
 
 

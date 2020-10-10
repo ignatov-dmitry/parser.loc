@@ -15,7 +15,7 @@ class AVBYParser extends Command {
 
     public function handle(){
         $avby = new AVBY();
-        $avby->loadSitemap();
+        $avby->parse();
     }
 
 }

@@ -62,7 +62,7 @@ class TelegramController extends Controller
             $btns = array();
             \Telegram::bot('carpars_bot')->answerCallbackQuery([
                 'callback_query_id' => $result['callback_query']['id'],
-                'text' => $result['callback_query']['data']
+                'text' => 'Выбрано' //$result['callback_query']['data']
             ]);
             $data = json_decode(str_replace('\\', '', $result['callback_query']['data']));
             switch ($data->action) {
