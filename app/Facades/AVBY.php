@@ -4,12 +4,13 @@
 namespace App\Facades;
 
 
+
 use Illuminate\Support\Facades\Facade;
 
-class TelegramBot extends Facade
+class AVBY extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'TelegramBot';
+        return 'AVBY';
     }
 }

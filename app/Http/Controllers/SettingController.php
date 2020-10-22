@@ -3,40 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Category;
-use App\Contracts\IParser;
 use App\TelegramUser;
 use App\Vehicle;
-use Debugbar;
 use Illuminate\Http\Request;
 use App\Facades\TelegramBot;
-use Illuminate\Support\Facades\Cache;
+use App\Facades\AVBY;
 class SettingController extends Controller
 {
-    private $parser;
-
-    public function __construct(IParser $parser)
-    {
-        $this->parser = $parser;
-        //$this->parser->parse();
-        //die();
-//        Debugbar::disable();
-    }
-
-
     public function index(){
         return view('settings.index');
     }
 
 
     public function loadCategoriesAvBy(){
-
-        return $this->parser->loadCategories();
+        return AVBY::loadCategories();
     }
 
 
     //Импорт категорий в БД
     function importCategory(Request $request){
-        $this->parser->importCategory($request);
+        AVBY::importCategory($request);
     }
 
 
@@ -69,7 +55,7 @@ class SettingController extends Controller
     //Импорт машин в БД
     public function importCars(Request $request) {
         $start = microtime(true);
-        $cars = $this->parser->getCarList($request->id, $request->url);
+        $cars = AVBY::getCarList($request->id, $request->url);
         $telegramUsers = TelegramUser::all();
         if ($cars['items']){
             $txt = array_map(function ($item){

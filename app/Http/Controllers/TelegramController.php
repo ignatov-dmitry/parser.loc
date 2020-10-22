@@ -17,33 +17,6 @@ class TelegramController extends Controller
 
     public function index(){
         $result = TelegramBot::getWebhookUpdates();
-//        $modelsArray = array();
-//        $modelNames = '';
-//        $userFilter = Filter::where('chat_id', '=', 518575553)->first();
-//        $brand = Category::whereId($userFilter->brand)->first()->name;
-//        $models = FilterVehicleModels::whereFilterId($userFilter->id)->get('category_id');
-//        $location = City::whereId($userFilter->city_id)->first();
-//        $region = Region::whereId($userFilter->region_id)->first();
-//        $country = Country::whereId($userFilter->country_id)->first();
-//
-//
-//        foreach ($models as $model){
-//            $modelsArray[] = Category::whereId($model->category_id)->first()->name;
-//        }
-//        $modelNames = empty($models->toArray()) == false ? implode(", ", $modelsArray) : "Все";
-//        $country = empty($country) == false ? $country->name : "Все";
-//        $region = empty($region) == false ? $region->name : "Все";
-//        $location = empty($location) == false ? $location->name : "Все" ;
-//
-//
-//
-//        $reply = "
-//                    Бренд: {$brand}
-//                    Модели: $modelNames
-//                    Страна: $country
-//                    Регион: $region
-//                    Город:  $location
-//                ";
 
 
         if (isset($result['message'])){

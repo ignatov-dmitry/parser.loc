@@ -1,6 +1,7 @@
 <?php
 namespace App\Console\Commands;
-use App\Parser\AVBY;
+
+use App\Facades\AVBY;
 use Illuminate\Console\Command;
 
 class AVBYParser extends Command {
@@ -14,8 +15,7 @@ class AVBYParser extends Command {
 
 
     public function handle(){
-        $avby = new AVBY();
-        $avby->parse();
+        AVBY::parse();
     }
 
 }

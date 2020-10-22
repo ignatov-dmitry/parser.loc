@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Category wherePlatformId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Category whereUrl($value)
  * @mixin \Eloquent
+ * @property string|null $release_start
+ * @property string|null $release_end
+ * @method static \Illuminate\Database\Eloquent\Builder|Category whereReleaseEnd($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Category whereReleaseStart($value)
  */
 class Category extends Model
 {

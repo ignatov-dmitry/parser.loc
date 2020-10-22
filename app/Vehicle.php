@@ -35,6 +35,14 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Vehicle whereUpped($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Vehicle whereUrl($value)
  * @mixin \Eloquent
+ * @property int|null $year
+ * @property int $country_id
+ * @property int $region_id
+ * @property int $city_id
+ * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereCityId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereCountryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereRegionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereYear($value)
  */
 class Vehicle extends Model
 {
