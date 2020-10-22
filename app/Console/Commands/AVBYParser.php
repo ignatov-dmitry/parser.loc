@@ -15,7 +15,7 @@ class AVBYParser extends Command {
 
 
     public function handle(){
-        AVBY::parse();
+        AVBY::checkNewVehicle();
     }
 
 }

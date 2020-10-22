@@ -34,7 +34,7 @@ class AVBY
     }
 
 
-    public function parse(){
+    public function checkNewVehicle(){
         $json = $this->doRequest('https://api.av.by/offer-types/cars/filters/main/apply', [
             'headers' => [
                 'Content-Type'     => 'application/json',
@@ -156,6 +156,9 @@ class AVBY
         }
 
     }
+
+
+
 
 
     public function getCityIdFromName(string $name){
