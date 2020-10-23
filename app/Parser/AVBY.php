@@ -165,4 +165,14 @@ class AVBY
         return City::whereName($name)->first()->id;
     }
 
+    public function getProperty(array $properties, string $propertyName){
+        foreach ($properties as $property){
+            if ($property->name === $propertyName){
+                return $property->value;
+            }
+        }
+
+        return false;
+    }
+
 }
