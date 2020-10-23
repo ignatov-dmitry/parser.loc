@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddYearColumnForFilterVehicleModelsTable extends Migration
+class AddVehicleStatus extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddYearColumnForFilterVehicleModelsTable extends Migration
      */
     public function up()
     {
-        Schema::table('filter_vehicle_models', function (Blueprint $table) {
-            $table->integer('year')->nullable()->default(0);
+        Schema::table('vehicles', function (Blueprint $table) {
+            $table->string('status')->nullable()->default('active');
         });
     }
 
@@ -25,8 +25,8 @@ class AddYearColumnForFilterVehicleModelsTable extends Migration
      */
     public function down()
     {
-        Schema::table('filter_vehicle_models', function (Blueprint $table) {
-            $table->dropColumn('year');
+        Schema::table('vehicles', function (Blueprint $table) {
+            $table->dropColumn('status');
         });
     }
 }

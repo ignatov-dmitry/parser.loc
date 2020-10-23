@@ -15,6 +15,12 @@ class CreatePriceHistoriesTable extends Migration
     {
         Schema::create('price_histories', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('vehicle_id');
+            $table->foreign('vehicle_id')
+                  ->references('id')
+                  ->on('vehicles')
+                  ->onDelete('cascade');
+            $table->float('price');
             $table->timestamps();
         });
     }
