@@ -191,13 +191,13 @@ class AVBY
     }
 
 
-    public function getLinkModelCategory($mapping_id){
+    public function getLinkModelCategory($brandMappingId, $ModelMappingId){
         $json = $this->doRequest('https://api.av.by/offer-types/cars/filters/main/apply', [
             'headers' => [
                 'Content-Type'     => 'application/json',
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.95'
             ],
-            'body' => '{"properties":[{"modified":true,"name":"brands","property":5,"value":[[{"name":"brand","value":2012},{"name":"model","value":5996,"modified":true,"previousValue":5846}]]},{"name":"price_currency","value":2}]}'
+            'body' => '{"properties":[{"modified":true,"name":"brands","property":5,"value":[[{"name":"brand","value":' . $brandMappingId . '},{"name":"model","value":' . $ModelMappingId . ',"modified":true,"previousValue":null}]]},{"name":"price_currency","value":2}]}'
         ],'POST');
 
         $data = json_decode($json);

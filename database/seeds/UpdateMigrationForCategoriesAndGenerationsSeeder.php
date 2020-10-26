@@ -44,7 +44,7 @@ class UpdateMigrationForCategoriesAndGenerationsSeeder extends Seeder
             ],[
                 'name' => $brand->name,
                 'platform_id' => 1,
-                'url' => 'undefined',
+                'url' => AVBY::getLinkBrandCategory($brand->id),
                 'parent_id' => 0
             ]);
             foreach ($brand->models as $model){
@@ -54,7 +54,7 @@ class UpdateMigrationForCategoriesAndGenerationsSeeder extends Seeder
                 ],[
                     'name' => $model->name,
                     'platform_id' => 1,
-                    'url' => AVBY::getLinkCategory($model->id),
+                    'url' => AVBY::getLinkModelCategory($brand->id, $model->id),
                     'parent_id' => $category->id
                 ]);
 
