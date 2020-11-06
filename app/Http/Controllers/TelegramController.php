@@ -8,6 +8,7 @@ use App\Country;
 use App\Facades\TelegramBot;
 use App\Filter;
 use App\FilterVehicleModels;
+use App\Generation;
 use App\Region;
 use App\TelegramUser;
 use Illuminate\Support\Facades\Log;
@@ -74,36 +75,13 @@ class TelegramController extends Controller
                         ]);
                     }
 
-//                    $reply = 'Выберите минимальный год производства';
-//                    $model = Category::where('id', '=', $data->id)->first();
-//                    $years = array();
-//
-//
-//
-//                    if (empty((int)$model->release_start) OR empty((int)$model->release_end)){
-//                        $reply = 'Нету данных о годах производства';
-//                    }
-//                    else{
-//                        for ($i = (int)$model->release_start; $i <= (int)$model->release_end; $i++){
-//
-//                            for ($j = 0; $j < 3; $j++){
-//                                if ($i + $j <= (int)$model->release_end){
-//                                    $year = $i + $j;
-//                                    $years[$i][$j] =  array('text' => $year, 'callback_data'=>'{"action":"year","year":"' . $year . '"}');
-//                                }
-//                            }
-//                            $i = $i + $j - 1;
-//
-//
-//                        }
-//                    }
-//
-//
-//                    $btns = array_values($years);
-
+                    $reply = 'Выберите поколение';
+                    $btns = TelegramBot::keyboardFromModel(Generation::where('category_id', '=', $data->id)->get(), 'generations');
                     break;
 
+                case 'generations':
 
+                    break;
 
                 case 'getCountry':
                     $reply = 'Выберите страну';

@@ -25,7 +25,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         //$schedule->command('inspire')->hourly();
-        $schedule->exec('php artisan avby:parse')->everyMinute();
+        //$schedule->exec('php artisan avby:parse_new')->everyMinute();
+        //$schedule->exec('php artisan avby:parse_all')->hourly();
     }
 
     /**

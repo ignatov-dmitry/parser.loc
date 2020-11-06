@@ -103,9 +103,6 @@ class DatabaseSeeder extends Seeder
                 $category->name = $model->name;
                 $category->platform_id = 1;
                 $category->parent_id = $id;
-                //dd($model->generations[0]->year_from);
-                $category->release_start = isset($model->generations[0]) ? $model->generations[0]->year_from : null;
-                $category->release_end = count($model->generations) > 1 ? (end($model->generations))->year_to : null;
 
                 $category->save();
             }

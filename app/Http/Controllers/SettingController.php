@@ -11,6 +11,7 @@ use App\Facades\AVBY;
 class SettingController extends Controller
 {
     public function index(){
+        AVBY::loadSitemap();
         return view('settings.index');
     }
 
